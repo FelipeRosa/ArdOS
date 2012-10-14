@@ -21,11 +21,9 @@
     TCCR1B = 0
     
 
-/* Scheduling queues (implemented as circular buffers) */
+/* Scheduling queues */
 static struct scheduling_queue_t
 {
-    uint8_t head;                               /* Queue's head */
-    uint8_t tail;                               /* Queue's tail */
     uint8_t size;                               /* Queue's size, i.e. the number of elements in the queue */
     pid_t entries[ARDOS_CONFIG_MAX_PROCESSES];  /* Queue's entries */
 } ready_queue, wait_queue;
@@ -33,22 +31,13 @@ static struct scheduling_queue_t
 static void sched_queue_init(struct scheduling_queue_t *queue)
 {
     queue->size = 0;
-    queue->head = 0;
-    queue->tail = 0;
 }
 
 static void sched_queue_enqueue(struct scheduling_queue_t *queue, pid_t pid)
 {
     if (queue->size < ARDOS_CONFIG_MAX_PROCESSES)
     {
-        queue->entries[queue->tail++] = pid;
-        
-        if (queue->tail >= ARDOS_CONFIG_MAX_PROCESSES)
-        {
-            queue->tail = 0;
-        }
-        
-        queue->size++;
+        queue->entries[queue->size++] = pid;
     }
 }
 
@@ -56,11 +45,12 @@ static pid_t sched_queue_dequeue(struct scheduling_queue_t *queue)
 {
     if (queue->size > 0)
     {
-        pid_t pid = queue->entries[queue->head++];
+        pid_t pid = queue->entries[0];
+        uint8_t i;
         
-        if (queue->head >= ARDOS_CONFIG_MAX_PROCESSES)
+        for (i = 1; i < ARDOS_CONFIG_MAX_PROCESSES; i++)
         {
-            queue->head = 0;
+            queue->entries[i - 1] = queue->entries[i];
         }
         
         queue->size--;

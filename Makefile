@@ -13,7 +13,10 @@ build: bin
 	$(CC) $(CFLAGS) -c ardos/kernel/scheduling.c -o obj/scheduling.o
 	$(CC) $(CFLAGS) -c ardos/kernel/timer.c -o obj/timer.o
 	
-	$(CC) -mmcu=atmega328p obj/main.o obj/process_management.o obj/scheduling.o obj/timer.o -o bin/main
+	$(CC) $(CFLAGS) -c ardos/api/ardos.c -o obj/ardos.o
+	$(CC) $(CFLAGS) -c ardos/api/process.c -o obj/process.o
+	
+	$(CC) -mmcu=atmega328p obj/main.o obj/process_management.o obj/scheduling.o obj/timer.o obj/ardos.o obj/process.o -o bin/main
 	$(OBJCOPY) -R .eeprom -O ihex bin/main bin/main.hex
 	
 	rm -rf obj
