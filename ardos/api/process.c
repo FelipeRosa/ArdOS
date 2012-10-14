@@ -55,11 +55,34 @@ void ardos_process_suspend()
 {
     struct wait_event_t we;
     
-    /* Puts the process to wait for no specific event */
+    /* Puts this process to wait for no specific event (critical) */
     we.code = ARDOS_UNDEFINED_WAIT_EVENT;
     ardos_kernel_put_onwait(ardos_process_pid(), &we);
     /* Yields */
     ardos_kernel_process_yield();
+}
+
+void ardos_process_suspend_other(pid_t pid)
+{
+    struct wait_event_t we;
+    
+    /* Puts the process to wait for no specific event (critical) */
+    we.code = ARDOS_UNDEFINED_WAIT_EVENT;
+    ardos_kernel_put_onwait(pid, &we);
+    /* Restores interrupts */
+    sei();
+}
+
+void ardos_process_resume(pid_t pid)
+{
+    /* The process must be WAITING */
+    if (ardos_kernel_get_process_state(pid) == ARDOS_PROCESS_STATE_WAIT)
+    {
+        /* Resumes */
+        ardos_kernel_reschedule(pid);
+    }
+    /* Restores the interrupts */
+    sei();
 }
 
 time_t ardos_process_millis()

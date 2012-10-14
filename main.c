@@ -21,10 +21,12 @@ void f1()
 
 void f2()
 {
+    pid_t cpid;
+
     DDRB = 1;
     PORTB = 0;
     
-    ardos_process_create(f1);
+    cpid = ardos_process_create(f1);
     
     for (; ; )
     {    

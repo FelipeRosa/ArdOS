@@ -23,8 +23,14 @@ extern pid_t ardos_process_pid();
  * amount of time */
 extern void ardos_process_sleep(time_t ms);
 
-/* Suspends the execution of the given process */
+/* Suspends the execution of the caller process */
 extern void ardos_process_suspend();
+
+/* Supends the execution of another process */
+extern void ardos_process_suspend_other(pid_t pid);
+
+/* Resumes the execution of a suspended process */
+extern void ardos_process_resume(pid_t pid);
 
 /* Gets the number of milliseconds since the
  * process started */

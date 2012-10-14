@@ -250,7 +250,7 @@ static void run_scheduling()
 ISR(TIMER1_COMPA_vect, ISR_NAKED)
 {
     /* Temporarily stores the STACK POINTER */
-    static volatile uint16_t sp_tmp;
+    static uint16_t sp_tmp;
  
     /* Save the executing process' hardware context */
     ARDOS_SAVE_HWCONTEXT();
