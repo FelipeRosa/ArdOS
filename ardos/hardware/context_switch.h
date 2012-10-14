@@ -3,6 +3,7 @@
 #define __ARDOS_HARDWARE_CONTEXT_SWITCH_H
 
 
+/* Saves the hardware context of a process */
 #define ARDOS_SAVE_HWCONTEXT()                  \
     __asm__ __volatile__("push r0 \n\t"         \
                          "in r0, __SREG__ \n\t" \
@@ -41,6 +42,7 @@
                          "push r30 \n\t"        \
                          "push r31 \n\t")
                          
+/* Restore a process' hardware context */
 #define ARDOS_RESTORE_HWCONTEXT()           \
     __asm__ __volatile__("pop r31 \n\t"     \
                          "pop r30 \n\t"     \

@@ -5,10 +5,10 @@
 #include <avr/interrupt.h>
 
 
-/* Entra em uma seção crítica.
- * Isto é feito desabilitando as interrupções
- * por causa das limitações do hardware
- */
+/* Enters a critical section. This
+ * is acomplished by disabling the
+ * interrupts because of some hardware
+ * limitations */
 #define ARDOS_ENTER_CRITICAL_SECTION() cli()
 
 #endif /* __ARDOS_HARDWARE_CRITICAL_H */

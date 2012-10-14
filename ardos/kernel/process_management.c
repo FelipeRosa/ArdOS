@@ -8,31 +8,32 @@
 #include <string.h>
 
 
-/* Tabela de processos do SO */
+/* Kernel's process table */
 struct process_table_entry_t
 {
-    bool_t used;                        /* Indica se a entrada está sendo usada ou não */
-    pid_t pid;                          /* PID do processo armazenado na entrada */
-    process_state_t state;              /* Estado do processo armazenado na entrada */
+    bool_t used;                        /* Indicates whether the entry is being used or not */
+    pid_t pid;                          /* PID of the process stored in the entry */
+    process_state_t state;              /* State of the process stored in the entry */
 
-    time_t creation_tick;               /* Tick de criação do processo (1 tick = 1 milisegundo) */
+    time_t creation_tick;               /* Process' creation tick (1 tick = 1 millisecond) */
     
-    struct wait_event_t wait_event;     /* Informação sobre evento de espera (caso o processo esteja no estado de espera) */
+    struct wait_event_t wait_event;     /* If the process is in the WAIT state, 
+                                         * this holds infomation about the wait event */
     
-    void *stack;                        /* Ponteiro da pilha do processo, também utilizado
-                                         * para armazenar o contexto de hardware do processo */
+    void *stack;                        /* Stack pointer of the process stored in the entry.
+                                         * The stack also holds the hardware context */
 };
 
 static struct process_table_t
 {
-    uint8_t process_count; /* Contador de processos existentes */
-    struct process_table_entry_t entries[ARDOS_CONFIG_MAX_PROCESSES + 1]; /* Entradas da tabela de processos. 
-                                                                           * Uma entrada extra é reservada para
-                                                                           * o processo IDLE */
+    uint8_t process_count; /* Existing processes counter */
+    struct process_table_entry_t entries[ARDOS_CONFIG_MAX_PROCESSES + 1]; /* Process table entries.
+                                                                           * One of which is used to hold
+                                                                           * information about the IDLE process */
 } process_table;
 
 
-/* PROCESSO IDLE */
+/* IDLE Process */
 void ardos_idle_process_thread() __attribute__((naked));
 void ardos_idle_process_thread()
 {
@@ -47,25 +48,25 @@ static void configure_idle_process()
     struct process_table_entry_t *idle;
     uint8_t *sp;
 
-    /* Configura o processo IDLE */
+    /* Configures the IDLE process */
     idle = process_table.entries + ARDOS_CONFIG_MAX_PROCESSES;
     idle->used = TRUE;
     idle->pid = ARDOS_CONFIG_MAX_PROCESSES;
     idle->state = ARDOS_PROCESS_STATE_DEAD;
     idle->creation_tick = 0;
     
-    /* Pilha do processo IDLE */
+    /* IDLE process' stack */
     sp = (uint8_t *)(ARDOS_CONFIG_KERNEL_STACK_TOP - ARDOS_CONFIG_KERNEL_STACK_SIZE + ARDOS_CONFIG_HWCONTEXT_SIZE);
     idle->stack = (void *)(sp - ARDOS_CONFIG_HWCONTEXT_SIZE);
     
-    /* Empilha o endereço de retorno */   
+    /* Pushes the return address */   
     *sp-- = (uint8_t)(uint16_t)ardos_idle_process_thread;
     *sp-- = (uint8_t)(((uint16_t)ardos_idle_process_thread) >> 8);
-    /* Empilha o R0 */
+    /* Pushes R0 */
     *sp-- = 0;
-    /* Empilha o SREG */
+    /* Pushes SREG */
     *sp-- = 0x80;
-    /* Empilha os registradores restantes */
+    /* Pushes the remaining registers */
     for (i = 0; i < 31; i++)
     {
         *sp-- = 0;
@@ -77,14 +78,13 @@ static void init_process_table()
 {
     uint8_t i;
     
-    /* Inicializa */
+    /* Initialize */
     for (i = 0; i < ARDOS_CONFIG_MAX_PROCESSES; i++)
     {
         process_table.entries[i].used = FALSE;
         process_table.entries[i].state = ARDOS_PROCESS_STATE_UNKNOWN;
     }
 
-    /* Configura o processo IDLE */
     configure_idle_process();    
 }
 
@@ -94,26 +94,26 @@ static void configure_process_table_entry(pid_t pid, void (*thread)())
     uint8_t *sp;
     uint8_t i;
 
-    /* Marca a entrada como usada */
+    /* Sets the entry as USED  */
     process_table.entries[pid].used = TRUE;
-    /* Garante o PID correto */
+    /* Asserts the right PID */
     process_table.entries[pid].pid = pid;
-    /* Configura o tick de criação */
+    /* Sets the creation tick */
     process_table.entries[pid].creation_tick = ardos_kernel_millis();
-    /* Coloca o processo em um estado indefinido */
+    /* Puts the event in an UNKNOWN state */
     process_table.entries[pid].state = ARDOS_PROCESS_STATE_UNKNOWN;
-    /* Configura a pilha do processo para a primeira execução */
+    /* Sets the process' stack for the first execution */
     sp = (uint8_t *)(ARDOS_CONFIG_PROCESSES_STACK_TOP - (ARDOS_CONFIG_PROCESS_STACK_SIZE + ARDOS_CONFIG_HWCONTEXT_SIZE) * pid);
     process_table.entries[pid].stack = (void *)(sp - ARDOS_CONFIG_HWCONTEXT_SIZE);
  
-    /* Empilha o endereço de retorno */   
+    /* Pushes the return address */   
     *sp-- = (uint8_t)thread_addr;
     *sp-- = (uint8_t)(thread_addr >> 8);
-    /* Empilha o R0 */
+    /* Pushes R0 */
     *sp-- = 0;
-    /* Empilha o SREG */
+    /* Pushes SREG */
     *sp-- = 0x80;
-    /* Empilha os registradores restantes */
+    /* Pushes the remaining registers */
     for (i = 0; i < 31; i++)
     {
         *sp-- = 0;
@@ -121,10 +121,10 @@ static void configure_process_table_entry(pid_t pid, void (*thread)())
 }
 
 
-/* Implementação da interface */
+/* Interface implementation */
 void ardos_kernel_process_management_init()
 {
-    /* Inicializa a tabela de processos */
+    /* Initializes the process table */
     process_table.process_count = 0;
     init_process_table();    
 }
@@ -138,13 +138,14 @@ pid_t ardos_kernel_create_process(void (*thread)())
 {
     pid_t pid = -1;
 
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
     
-    /* Só cria se houver entrada disponível na tabela */
+    /* The process will only be created if there's an available
+     * entry in the process table */
     if (process_table.process_count < ARDOS_CONFIG_MAX_PROCESSES)
     {
-        /* Encontra uma entrada vazia na tabela de processos */
+        /* Finds a available process table entry */
         for (pid = 0; pid < ARDOS_CONFIG_MAX_PROCESSES; pid++)
         {
             if (process_table.entries[pid].used == FALSE)
@@ -152,14 +153,11 @@ pid_t ardos_kernel_create_process(void (*thread)())
                 break;
             }
         }
-    
-        /* Configura a entrada da tabela de processos 
-         * para o novo processo sendo criado */
+        /* Configures the entry */
         configure_process_table_entry(pid, thread);
-        /* Começa o escalonamento */
+        /* Starts scheduling */
         ardos_kernel_schedule(pid);
-    
-        /* Incrementa o contador de processos */
+        /* Counts +1 process */
         process_table.process_count++;
     }
     
@@ -171,16 +169,16 @@ void ardos_kernel_destroy_process(pid_t pid)
     struct process_table_entry_t *entry = process_table.entries + pid;
     process_state_t prev_state = entry->state;
 
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
     
-    /* Marca a entrada como não usada */
+    /* Sets the entry as NOT USED */
     entry->used = FALSE;
-    /* Coloca o processo no estado de MORTO */
+    /* Puts the process in the DEAD state */
     entry->state = ARDOS_PROCESS_STATE_DEAD;
-    /* Decrementa o contador de processos */
+    /* Decrements the process count */
     process_table.process_count--;
-    /* Faz a atualização necessária do escalonador */
+    /* Updates the scheduler queues (only the ones needed) */
     if (prev_state == ARDOS_PROCESS_STATE_WAIT)
     {
         ardos_kernel_update_waitqueue();
@@ -189,40 +187,36 @@ void ardos_kernel_destroy_process(pid_t pid)
     {
         ardos_kernel_update_readyqueue();
     }
-    /* Verifica se existe algum processo esperando pelo
-     * termino deste que acabou de ser destruído */
+    /* Wakes up any joined processes */
     ardos_kernel_wakeup_joined(pid);
 }
 
 time_t ardos_kernel_process_millis(pid_t pid)
 {
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    /* Calcula */
+    /* Computes ticks */
     return (ardos_kernel_millis() - process_table.entries[pid].creation_tick);
 }
 
 void ardos_kernel_set_process_state(pid_t pid, process_state_t state)
 {
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    /* Configura o estado do processo */
+    /* Sets the process' state */
     process_table.entries[pid].state = state;
 }
 
 process_state_t ardos_kernel_get_process_state(pid_t pid)
 {
-    /* Não é necessário entrar em uma seção crítica,
-     * pois sizeof(process_state_t) = 1
-     */
     return process_table.entries[pid].state;
 }
 
 void ardos_kernel_set_process_stack(pid_t pid, void *stack)
 {
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    /* Configura a stack */
+    /* Sets the stack pointer */
     if (pid != -1 && pid != ARDOS_CONFIG_MAX_PROCESSES)
     {
         process_table.entries[pid].stack = stack;
@@ -231,9 +225,9 @@ void ardos_kernel_set_process_stack(pid_t pid, void *stack)
 
 void *ardos_kernel_get_process_stack(pid_t pid)
 {
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    /* Retorna o ponteiro */
+    /* Returns the pointer */
     return process_table.entries[pid].stack;
 }
 
@@ -241,16 +235,16 @@ void ardos_kernel_set_process_waitevent(pid_t pid, const struct wait_event_t *we
 {
     struct process_table_entry_t *entry = process_table.entries + pid;
 
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    /* Copia as informações */
+    /* Copies the information */
     memcpy((void *)(&entry->wait_event), (const void *)we, sizeof(struct wait_event_t));
 }
 
 struct wait_event_t *ardos_kernel_get_process_waitevent(pid_t pid)
 {
-    /* Seção crítica (ponteiro = 2 bytes) */
+    /* Critical section (pointer = 2 bytes) */
     ARDOS_ENTER_CRITICAL_SECTION();
-    /* Retorna */
+    /* Returns */
     return &process_table.entries[pid].wait_event;   
 }

@@ -13,26 +13,25 @@
     OCR0A = 250;                         \
     TIMSK0 = 1 << OCIE0A;
 
-/* Implementação da interface */
+/* Interface implementation */
 static time_t millis = 0;
 
 void ardos_kernel_timer_init()
 {
     millis = 0;
-    
-    /* Inicia o contador */
+    /* Begins TIMER0 execution */
     START_TIMER0();
 }
 
 time_t ardos_kernel_millis()
 {
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    /* Retorna o contador */
+    /* Returns the millisecond counter */
     return millis;
 }
 
-/* Interrupção */
+/* Interuption */
 ISR(TIMER0_COMPA_vect)
 {
     millis++;

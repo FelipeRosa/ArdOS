@@ -10,7 +10,7 @@
 #include <avr/interrupt.h>
 
 
-/* Macros do TIMER1 */
+/* TIMER1 macros */
 #define START_TIMER1()                   \
     TCCR1A = 0;                          \
     TCCR1B = (1 << WGM12) | (1 << CS10); \
@@ -21,15 +21,13 @@
     TCCR1B = 0
     
 
-/* Filas de escalonamento (buffer circular)
- * (fila de pronto e fila de espera) 
- */
+/* Scheduling queues (implemented as circular buffers) */
 static struct scheduling_queue_t
 {
-    uint8_t head;                               /* Início da pilha */
-    uint8_t tail;                               /* Final da pilha */
-    uint8_t size;                               /* Tamanho da pilha, i.e número de elementos */
-    pid_t entries[ARDOS_CONFIG_MAX_PROCESSES];  /* Entradas da fila */
+    uint8_t head;                               /* Queue's head */
+    uint8_t tail;                               /* Queue's tail */
+    uint8_t size;                               /* Queue's size, i.e. the number of elements in the queue */
+    pid_t entries[ARDOS_CONFIG_MAX_PROCESSES];  /* Queue's entries */
 } ready_queue, wait_queue;
 
 static void sched_queue_init(struct scheduling_queue_t *queue)
@@ -73,24 +71,22 @@ static pid_t sched_queue_dequeue(struct scheduling_queue_t *queue)
 }
 
 
-/* Implementação da interface */
-static pid_t sched_epid = -1;    /* PID do processo em execução */
+/* Interface implementation */
+static pid_t sched_epid = -1;    /* PID of the process being executed */
 
 
 void ardos_kernel_scheduling_init()
 {
     sched_queue_init(&ready_queue);
     sched_queue_init(&wait_queue);
-
-    /* Inicializa o TIMER1 */
     START_TIMER1();
 }
 
 void ardos_kernel_schedule(pid_t pid)
 {
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    /* Coloca o processo na fila de pronto */
+    /* Puts the process in the READY queue */
     ardos_kernel_set_process_state(pid, ARDOS_PROCESS_STATE_READY);
     sched_queue_enqueue(&ready_queue, pid);
 }
@@ -103,19 +99,19 @@ void ardos_kernel_reschedule(pid_t pid)
 
 bool_t ardos_kernel_put_onwait(pid_t pid, const struct wait_event_t *we)
 {
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    /* Só é possível colocar o processo em
-     * espera, se ele estiver em estado de PRONTO */
+    /* It's only possible to put a process to WAIT
+     * if it's READY */
     if (ardos_kernel_get_process_state(pid) == ARDOS_PROCESS_STATE_READY)
     {
-        /* Configura o evento de espera */
+        /* Sets the wait event */
         ardos_kernel_set_process_waitevent(pid, we);
-        /* Coloca o processo em estado de espera e o
-         * adiciona à fila de espera */
+        /* Puts the process in the WAIT state and adds
+         * it to the WAIT queue */
         ardos_kernel_set_process_state(pid, ARDOS_PROCESS_STATE_WAIT);
         sched_queue_enqueue(&wait_queue, pid);
-        /* Atualiza a fila de pronto (retira o processo de lá) */
+        /* Updates the READY queue */
         ardos_kernel_update_readyqueue();
         
         return TRUE;
@@ -129,7 +125,7 @@ void ardos_kernel_update_readyqueue()
     uint8_t i;
     uint8_t s = ready_queue.size;
     
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
     
     for (i = 0; i < s; i++)
@@ -148,7 +144,7 @@ void ardos_kernel_update_waitqueue()
     uint8_t i;
     uint8_t s = wait_queue.size;
  
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
     
     for (i = 0; i < s; i++)
@@ -166,10 +162,9 @@ void ardos_kernel_wakeup_joined(pid_t pid)
 {
     uint8_t i;
 
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    /* Procura e acorda qualquer processo que
-     * esteja esperando pelo processo "pid" */
+    /* Searchs and wakes up any joined process */
     for (i = wait_queue.size; i > 0; i--)
     {
         pid_t wakeup_pid = sched_queue_dequeue(&wait_queue);
@@ -190,18 +185,19 @@ void ardos_kernel_wakeup_joined(pid_t pid)
 
 void ardos_kernel_process_yield()
 {
-    /* Seção crítica */
+    /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    /* Pára o TIMER e o seta com um valor
-     * para forçar uma interrupção */
+    /* Stops the timer */
     STOP_TIMER1();
+    /* Sets the timer count in a
+     * state that is going to generate an interrupt */
     TCNT1 = 14999;
     START_TIMER1();
     sei(); 
 }
 
 
-/* Interrupção */
+/* Interuption */
 static void run_scheduling()
 {
     uint8_t i;
@@ -209,13 +205,12 @@ static void run_scheduling()
 
     volatile time_t t;
 
-    /* Já estaremos em uma seção crítica,
-     * então apenas pára o TIMER1 */
+    /* Already in a critical section,
+     * it's only needed to stop TIMER1 */
     STOP_TIMER1();
     
-    /* Retorna o processo que estava sendo
-     * executado (se havia algum) para a fila
-     * de pronto */
+    /* Returns (if it's meant to) the executing process
+     * to the READY queue */
     if (sched_epid != -1)
     {
         if (ardos_kernel_get_process_state(sched_epid) == ARDOS_PROCESS_STATE_READY)
@@ -224,8 +219,7 @@ static void run_scheduling()
         }
     }
     
-    /* Verifica se algum processo precisa ser acordado por
-     * estar esperando por um evento de TEMPO */
+    /* Wakes up any process waiting for a TIME event */
     for (i = wait_queue.size; i > 0; i--)
     {
         pid_t pid = sched_queue_dequeue(&wait_queue);
@@ -243,40 +237,37 @@ static void run_scheduling()
         sched_queue_enqueue(&wait_queue, pid);
     }
     
-    /* Obtém o PID do próximo processo a ser
-     * executado */
+    /* Gets the next process' PID. */
     if (ready_queue.size > 0)
     {   
         sched_epid = sched_queue_dequeue(&ready_queue);
     }
     else
     { 
-        /* Coloca o processo IDLE */
+        /* Schedules the IDLE process */
         sched_epid = ARDOS_CONFIG_MAX_PROCESSES;
     }
        
-    /* Reinicia o TIMER1 */
+    /* Restarts TIMER1 */
     START_TIMER1();
 }
 
 ISR(TIMER1_COMPA_vect, ISR_NAKED)
 {
-    /* Armazena o SP temporariamente */
+    /* Temporarily stores the STACK POINTER */
     static volatile uint16_t sp_tmp;
  
-    /* Salva o contexto de hardware do processo */
+    /* Save the executing process' hardware context */
     ARDOS_SAVE_HWCONTEXT();
-    /* Salva o SP para podermos usar a pilha do Kernel
-     * para chamar funções */
+    /* Store the executing process' SP */
     sp_tmp = SP;
-    /* Muda para a pilha do Kernel */
+    /* Set the Kernel's SP */
     SP = ARDOS_CONFIG_KERNEL_STACK_TOP;
-    /* Salva o ponteiro da pilha do processo */
+    /* Saves the executing process' STACK POINTER */
     ardos_kernel_set_process_stack(sched_epid, (void *)sp_tmp);
-    /* Executa o escalonament */
+    /* Runs the scheduler */
     run_scheduling();
-    /* Restaura o contexto de hardware do processo
-     * a ser executado a seguir */
+    /* Restores and executes the next process */
     SP = (uint16_t)ardos_kernel_get_process_stack(sched_epid);
     ARDOS_RESTORE_HWCONTEXT();
     reti();

@@ -14,21 +14,21 @@ typedef uint8_t wevent_code_t;
 #define ARDOS_UNDEFINED_WAIT_EVENT 255
 
 
-/* Evento de espera de tempo */
+/* Time wait event */
 struct time_wait_event_t
 {
     time_t wakeup_tick;
 };
 
 
-/* Evento de espera por processo (JOIN) */
+/* Process wait event (join) */
 struct join_wait_event_t
 {
     pid_t joined_pid;
 };
 
 
-/* União de estruturas de eventos de espera */
+/* Union of wait event structs */
 union wait_event_info_t
 {
     struct time_wait_event_t time;
@@ -36,9 +36,8 @@ union wait_event_info_t
 };
 
 
-/* Estrutura que armazena o código e
- * informação do evento armazenado
- */
+/* Struct to hold an event's code
+ * and information */
 struct wait_event_t
 {
     wevent_code_t code;

@@ -3,30 +3,28 @@
 #define __ARDOS_CONFIG_H
 
 
-/* Endereço do topo da pilha para funções
- * do Kernel (que utilizam variáveis locais)
- */
+/* Kernel's stack top address */
 #define ARDOS_CONFIG_KERNEL_STACK_TOP 0x8FF
 
-/* Tamanho da pilha para funções do Kernel */
+/* Kernel's stack size */
 #define ARDOS_CONFIG_KERNEL_STACK_SIZE 0x80
 
 
-/* Número máximo de processos que 
- * podem ser alocados no SO
- */
+/* Number of processes that can
+ * be allocated by the OS */
 #define ARDOS_CONFIG_MAX_PROCESSES 4
 
-/* Endereço do topo da pilha utilizada
- * pelos processos
- */
+/* Processes' stack top.
+ * The system starts allocating
+ * the stack for processes at this address. */
 #define ARDOS_CONFIG_PROCESSES_STACK_TOP (ARDOS_CONFIG_KERNEL_STACK_TOP - ARDOS_CONFIG_KERNEL_STACK_SIZE)
 
-/* Tamanho da pilha alocada para cada processo criado */
+/* Size of the stack allocated for each
+ * of the processes */
 #define ARDOS_CONFIG_PROCESS_STACK_SIZE 0x100
 
 
-/* Tamanho (em bytes) do contexto de hardware */
+/* Size (in bytes) of the processes' hardware context */
 #define ARDOS_CONFIG_HWCONTEXT_SIZE 0x23
 
 #endif /* __ARDOS_CONFIG_H */

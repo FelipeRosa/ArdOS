@@ -5,17 +5,15 @@
 #include <stdint.h>
 
 
+/* Type to hold time variables */
 typedef uint32_t time_t;
 
 
-/* Inicializa o módulo do TIMER */
+/* Initializes the TIMER module */
 extern void ardos_kernel_timer_init();
 
-/* Obtém o número de milisegundos
- * passados desde de o início do
- * timer
- */
+/* Gets the number of milliseconds
+ * passed since the timer began executing */
 extern time_t ardos_kernel_millis();
-
 
 #endif /* __ARDOS_KERNEL_TIMER_H */
