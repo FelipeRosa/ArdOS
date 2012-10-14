@@ -196,6 +196,11 @@ void ardos_kernel_process_yield()
     sei(); 
 }
 
+pid_t ardos_kernel_process_pid()
+{
+    return sched_epid;
+}
+
 
 /* Interuption */
 static void run_scheduling()

@@ -35,5 +35,8 @@ extern void ardos_kernel_wakeup_joined(pid_t pid);
 /* Makes a process to relinquish the CPU */
 extern void ardos_kernel_process_yield();
 
+/* Gets the PID of the caller process */
+extern pid_t ardos_kernel_process_pid();
+
 #endif /* __ARDOS_KERNEL_SCHEDULING_H */
 
