@@ -15,8 +15,9 @@ build: bin
 	
 	$(CC) $(CFLAGS) -c ardos/api/ardos.c -o obj/ardos.o
 	$(CC) $(CFLAGS) -c ardos/api/process.c -o obj/process.o
+	$(CC) $(CFLAGS) -c ardos/api/semaphore.c -o obj/semaphore.o
 	
-	$(CC) -mmcu=atmega328p obj/main.o obj/process_management.o obj/scheduling.o obj/timer.o obj/ardos.o obj/process.o -o bin/main
+	$(CC) -mmcu=atmega328p obj/main.o obj/process_management.o obj/scheduling.o obj/timer.o obj/ardos.o obj/process.o obj/semaphore.o -o bin/main
 	$(OBJCOPY) -R .eeprom -O ihex bin/main bin/main.hex
 	
 	rm -rf obj

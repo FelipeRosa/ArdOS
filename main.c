@@ -5,6 +5,8 @@
 
 #include "ardos/ardos.h"
 
+ardos_semaphore_t sem;
+
 void f1()
 {
     DDRD = 0x80;        
@@ -13,7 +15,9 @@ void f1()
     for (; ; )
     {
         ardos_process_sleep(100);
+        ardos_semaphore_wait(&sem);
         PORTD ^= 0x80;
+        ardos_semaphore_signal(&sem);
     }
     
     ardos_process_exit();
@@ -27,11 +31,14 @@ void f2()
     PORTB = 0;
     
     cpid = ardos_process_create(f1);
+    ardos_semaphore_init(&sem, 2);
     
     for (; ; )
     {    
         ardos_process_sleep(100);
-        PORTB ^= 1; 
+        ardos_semaphore_wait(&sem);
+        PORTB ^= 1;
+        ardos_semaphore_signal(&sem);
     }
 
     ardos_process_exit();
