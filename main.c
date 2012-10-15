@@ -9,15 +9,17 @@ ardos_semaphore_t sem;
 
 void f1()
 {
-    DDRD = 0x80;        
-    PORTD = 0x0;
-    
+    ardos_process_join(0);
+
     for (; ; )
     {
         ardos_process_sleep(100);
         ardos_semaphore_wait(&sem);
-        PORTD ^= 0x80;
-        ardos_semaphore_signal(&sem);
+        if (PORTD & 0x80)
+            PORTD &= ~0x80;
+        else
+            PORTD |= 0x80;
+        ardos_semaphore_signal(&sem);    
     }
     
     ardos_process_exit();
@@ -26,19 +28,32 @@ void f1()
 void f2()
 {
     pid_t cpid;
-
-    DDRB = 1;
-    PORTB = 0;
+    uint8_t x = 0;
     
+    DDRD = 0x80 | 0x40;
+
+    ardos_semaphore_init(&sem, 1);
     cpid = ardos_process_create(f1);
-    ardos_semaphore_init(&sem, 2);
     
     for (; ; )
     {    
-        ardos_process_sleep(100);
+        ardos_process_sleep(200);
         ardos_semaphore_wait(&sem);
-        PORTB ^= 1;
+        if (PORTD & 0x40)
+            PORTD &= ~0x40;
+        else
+            PORTD |= 0x40;
         ardos_semaphore_signal(&sem);
+            
+        if (x < 8)
+        {
+            x++;
+        }
+        else if (x == 8)
+        {
+            x++;
+            ardos_process_exit();
+        }
     }
 
     ardos_process_exit();

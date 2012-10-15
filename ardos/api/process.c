@@ -1,3 +1,19 @@
+/*
+ArdOS Copyright (C) 2012 Felipe Soares Gonçalves Rosa
+
+ArdOS is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ArdOS is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include "../kernel/process_management.h"
 #include "../kernel/scheduling.h"
@@ -85,12 +101,30 @@ void ardos_process_resume(pid_t pid)
     sei();
 }
 
+void ardos_process_join(pid_t pid)
+{
+    struct wait_event_t we;
+    
+    /* Puts the process to wait for no specific event (critical) */
+    we.code = ARDOS_JOIN_WAIT_EVENT;
+    we.e_info.join.joined_pid = pid;
+    ardos_kernel_put_onwait(ardos_process_pid(), &we);
+    /* Yields */
+    ardos_kernel_process_yield();
+}
+
 time_t ardos_process_millis()
 {
+
     /* Gets the ticks (critical) */
     time_t ticks = ardos_kernel_process_millis(ardos_process_pid());
     /* Restores the interrupts */
     sei();
     /* Returns the ticks */
     return ticks;
+}
+
+void ardos_process_yield()
+{
+    ardos_kernel_process_yield();
 }
