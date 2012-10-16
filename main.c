@@ -5,31 +5,42 @@
 
 #include "ardos/ardos.h"
 
-ardos_semaphore_t sem;
-
 void f1()
 {
-    ardos_semaphore_wait(&sem);
-    PORTB = 1;
-    ardos_process_sleep(1000);
-    PORTB = PORTB * 2;
-    ardos_process_sleep(2000);
-    ardos_semaphore_signal(&sem);
-
-    ardos_process_exit();
+    DDRB = 1;
+    
+    for (; ; )
+    {
+        ardos_process_sleep(100);
+        PORTB ^= 1;
+    }
 }
 
 void f2()
 {
-    DDRB = 3;
+    uint8_t debounce = 0;
+    uint8_t on = 1;
+    pid_t pid;
+
+    pid = ardos_process_create(f1);
+    ardos_enable_eint(ARDOS_EINT_0, ARDOS_EINT_RISING_EDGE);
     
-    ardos_semaphore_init(&sem, 1);
-    ardos_process_create(f1);
+    for (; ; )
+    {
+        ardos_process_sleep(200);    
+        ardos_process_wait_eint(ARDOS_EINT_0);
     
-    ardos_semaphore_wait(&sem);
-    PORTB = 2;
-    ardos_process_sleep(2000);
-    ardos_semaphore_signal(&sem);
+        if (!on)
+        {
+            ardos_process_resume(pid);
+            on = 1;
+        }
+        else
+        {
+            ardos_process_suspend_other(pid);
+            on = 0;
+        }
+    }
     
     ardos_process_exit();
 }

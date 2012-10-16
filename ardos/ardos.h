@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef __ARDOS_H
 #define __ARDOS_H
 
+#include "api/external_interrupts.h"
 #include "api/semaphore.h"
 #include "api/process.h"
 #include "api/ardos.h"

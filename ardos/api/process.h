@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../kernel/types.h"
 #include "../kernel/timer.h"
 
+#include "external_interrupts.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,7 +53,7 @@ extern void ardos_process_suspend_other(pid_t pid);
 /* Resumes the execution of a suspended process */
 extern void ardos_process_resume(pid_t pid);
 
-/* Wait for a processo to terminate its execution */
+/* Waits for a process to terminate its execution */
 extern void ardos_process_join(pid_t pid);
 
 /* Gets the number of milliseconds since the
@@ -60,6 +62,10 @@ extern time_t ardos_process_millis();
 
 /* Give up the CPU for another process to execute */
 extern void ardos_process_yield();
+
+
+/* Waits for an external interrupt */
+extern void ardos_process_wait_eint(ardos_eint_t int_num);
 
 #ifdef __cplusplus
 }

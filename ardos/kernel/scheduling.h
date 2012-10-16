@@ -35,7 +35,7 @@ extern void ardos_kernel_reschedule(pid_t pid);
 
 /* Puts some process to wait for
  * an specific event */
-extern bool_t ardos_kernel_put_onwait(pid_t pid, const struct wait_event_t *we);
+extern void ardos_kernel_put_onwait(pid_t pid, const struct wait_event_t *we);
 
 /* Updates the scheduler READY queue
  * (i.e. Search for a process that isn't

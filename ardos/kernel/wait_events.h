@@ -27,20 +27,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 typedef uint8_t wevent_code_t;
 #define ARDOS_TIME_WAIT_EVENT      1
 #define ARDOS_JOIN_WAIT_EVENT      2
+#define ARDOS_INTERRUPT_WAIT_EVENT 3
 #define ARDOS_UNDEFINED_WAIT_EVENT 255
 
 
-/* Time wait event */
+/* Wait events' structures */
 struct time_wait_event_t
 {
     time_t wakeup_tick;
 };
 
-
-/* Process wait event (join) */
 struct join_wait_event_t
 {
     pid_t joined_pid;
+};
+
+struct interrupt_wait_event_t
+{
+    uint8_t interrupt_num;
 };
 
 
@@ -49,6 +53,7 @@ union wait_event_info_t
 {
     struct time_wait_event_t time;
     struct join_wait_event_t join;
+    struct interrupt_wait_event_t interrupt;
 };
 
 

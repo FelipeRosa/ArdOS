@@ -103,27 +103,23 @@ void ardos_kernel_reschedule(pid_t pid)
     ardos_kernel_update_waitqueue();
 }
 
-bool_t ardos_kernel_put_onwait(pid_t pid, const struct wait_event_t *we)
+void ardos_kernel_put_onwait(pid_t pid, const struct wait_event_t *we)
 {
     /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    /* It's only possible to put a process to WAIT
-     * if it's READY */
+    /* Sets the wait event */
+    ardos_kernel_set_process_waitevent(pid, we);
+    /* If the process was awake then we must put it in the
+     * wait queue and remove it from the ready queue */
     if (ardos_kernel_get_process_state(pid) == ARDOS_PROCESS_STATE_READY)
     {
-        /* Sets the wait event */
-        ardos_kernel_set_process_waitevent(pid, we);
-        /* Puts the process in the WAIT state and adds
-         * it to the WAIT queue */
+        /* Puts the process in the WAIT state */
         ardos_kernel_set_process_state(pid, ARDOS_PROCESS_STATE_WAIT);
+        /* Adds it to the WAIT queue */
         sched_queue_enqueue(&wait_queue, pid);
         /* Updates the READY queue */
         ardos_kernel_update_readyqueue();
-        
-        return TRUE;
     }
-
-    return FALSE;
 }
 
 void ardos_kernel_update_readyqueue()
@@ -282,4 +278,37 @@ ISR(TIMER1_COMPA_vect, ISR_NAKED)
     SP = (uint16_t)ardos_kernel_get_process_stack(sched_epid);
     ARDOS_RESTORE_HWCONTEXT();
     reti();
+}
+
+/* External interruptions */
+static void wakeup_external_interrupt(uint8_t int_num)
+{
+    uint8_t i;
+    /* Wakes up any process waiting for the interrupt */
+    for (i = wait_queue.size; i > 0; i--)
+    {
+        pid_t pid = sched_queue_dequeue(&wait_queue);
+        struct wait_event_t *we = ardos_kernel_get_process_waitevent(pid);
+        
+        if (we->code == ARDOS_INTERRUPT_WAIT_EVENT)
+        {
+            if (we->e_info.interrupt.interrupt_num == int_num)
+            {
+                ardos_kernel_schedule(pid);
+                continue;
+            }
+        }
+        
+        sched_queue_enqueue(&wait_queue, pid);
+    }
+}
+
+ISR(INT0_vect)
+{
+    wakeup_external_interrupt(0);
+}
+
+ISR(INT1_vect)
+{
+    wakeup_external_interrupt(1);
 }

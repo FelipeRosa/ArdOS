@@ -128,3 +128,16 @@ void ardos_process_yield()
 {
     ardos_kernel_process_yield();
 }
+
+
+void ardos_process_wait_eint(ardos_eint_t int_num)
+{
+   struct wait_event_t we;
+    
+    /* Puts the process to wait for no specific event (critical) */
+    we.code = ARDOS_INTERRUPT_WAIT_EVENT;
+    we.e_info.interrupt.interrupt_num = int_num;
+    ardos_kernel_put_onwait(ardos_process_pid(), &we);
+    /* Yields */
+    ardos_kernel_process_yield();
+}
