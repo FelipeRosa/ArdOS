@@ -21,6 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../kernel/types.h"
 #include "../config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Structure of a semaphore */
 #define ARDOS_SEMAPHORE_QUEUE_SIZE ARDOS_CONFIG_MAX_PROCESSES
@@ -43,4 +46,7 @@ extern void ardos_semaphore_wait(ardos_semaphore_t *sem);
 /* Unlocks a semaphore */
 extern void ardos_semaphore_signal(ardos_semaphore_t *sem);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __ARDOS_API_SEMAPHORE_H */

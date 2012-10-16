@@ -21,6 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../kernel/types.h"
 #include "../kernel/timer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Creates a process that executes the given thread.
  * Returns -1 in case the process could not be created */
@@ -58,4 +61,7 @@ extern time_t ardos_process_millis();
 /* Give up the CPU for another process to execute */
 extern void ardos_process_yield();
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __ARDOS_API_PROCESS_H */

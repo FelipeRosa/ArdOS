@@ -20,6 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Type to hold time variables */
 typedef uint32_t time_t;
@@ -32,4 +35,7 @@ extern void ardos_kernel_timer_init();
  * passed since the timer began executing */
 extern time_t ardos_kernel_millis();
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __ARDOS_KERNEL_TIMER_H */

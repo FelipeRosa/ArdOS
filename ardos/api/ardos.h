@@ -18,8 +18,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef __ARDOS_API_ARDOS_H
 #define __ARDOS_API_ARDOS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Initializes the operating system and
  * starts the main thread */
 extern void ardos_init(void (*main_thread)());
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __ARDOS_API_ARDOS_H */

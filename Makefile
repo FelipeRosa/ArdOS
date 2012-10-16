@@ -9,6 +9,7 @@ build: bin
 	rm -rf obj
 	mkdir obj
 	$(CC) $(CFLAGS) -c main.c -o obj/main.o
+	
 	$(CC) $(CFLAGS) -c ardos/kernel/process_management.c -o obj/process_management.o
 	$(CC) $(CFLAGS) -c ardos/kernel/scheduling.c -o obj/scheduling.o
 	$(CC) $(CFLAGS) -c ardos/kernel/timer.c -o obj/timer.o

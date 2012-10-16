@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "timer.h"
 #include "wait_events.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef uint8_t process_state_t;
 
@@ -70,4 +73,7 @@ extern void ardos_kernel_set_process_waitevent(pid_t pid, const struct wait_even
 /* Gets the "wait event" information of a process */
 extern struct wait_event_t *ardos_kernel_get_process_waitevent(pid_t pid);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __ARDOS_KERNEL_PROCESS_MANAGEMENT_H */

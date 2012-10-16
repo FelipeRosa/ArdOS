@@ -21,6 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "types.h"
 #include "wait_events.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Initializes the SCHEDULING module */
 extern void ardos_kernel_scheduling_init();
@@ -54,5 +57,8 @@ extern void ardos_kernel_process_yield();
 /* Gets the PID of the caller process */
 extern pid_t ardos_kernel_process_pid();
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __ARDOS_KERNEL_SCHEDULING_H */
 
