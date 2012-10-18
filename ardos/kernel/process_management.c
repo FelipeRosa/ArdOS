@@ -50,12 +50,16 @@ static struct process_table_t
 
 
 /* IDLE Process */
+#define AVR_SLEEP() __asm__ __volatile__("sleep \n\t" : : : "memory")
 void ardos_idle_process_thread() __attribute__((naked));
 void ardos_idle_process_thread()
 {
-
-    for (; ; )
-        sei();
+    /* Puts the MCU in the sleep mode,
+     * so we can save a little bit of power */
+    SMCR = 0;    /* Idle mode */
+    AVR_SLEEP(); /* Execute the SLEEP instruction */
+    
+    for (; ; ) ;
 }
 
 static void configure_idle_process()
