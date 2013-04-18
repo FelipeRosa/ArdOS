@@ -63,7 +63,6 @@ extern time_t ardos_process_millis();
 /* Give up the CPU for another process to execute */
 extern void ardos_process_yield();
 
-
 /* Waits for an external interrupt */
 extern void ardos_process_wait_eint(ardos_eint_t int_num);
 
