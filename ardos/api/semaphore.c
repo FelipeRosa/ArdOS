@@ -35,16 +35,16 @@ static pid_t semaphore_queue_dequeue(ardos_semaphore_t *sem)
     {
         pid_t pid = sem->queue[0];
         uint8_t i;
-        
+
         for (i = 1; i < sem->queue_size; i++)
         {
             sem->queue[i - 1] = sem->queue[i];
         }
-    
+
         sem->queue_size--;
         return pid;
     }
-    
+
     return -1;
 }
 

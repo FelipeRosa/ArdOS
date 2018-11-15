@@ -31,7 +31,7 @@ extern "C" {
 typedef struct
 {
     int8_t value;                              /* Semaphore's value */
-    
+
     uint8_t queue_size;                         /* Waiting processes queue's size */
     pid_t queue[ARDOS_SEMAPHORE_QUEUE_SIZE];    /* Waiting processes queue */
 } ardos_semaphore_t;

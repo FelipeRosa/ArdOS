@@ -32,10 +32,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     TCCR1B = (1 << WGM12) | (1 << CS10); \
     OCR1A = 15000;                       \
     TIMSK1 = 1 << OCIE1A
-    
+
 #define STOP_TIMER1() \
     TCCR1B = 0
-    
+
 
 /* Scheduling queues */
 static struct scheduling_queue_t
@@ -63,16 +63,16 @@ static pid_t sched_queue_dequeue(struct scheduling_queue_t *queue)
     {
         pid_t pid = queue->entries[0];
         uint8_t i;
-        
+
         for (i = 1; i < ARDOS_CONFIG_MAX_PROCESSES; i++)
         {
             queue->entries[i - 1] = queue->entries[i];
         }
-        
+
         queue->size--;
         return pid;
     }
-    
+
     return -1;
 }
 
@@ -126,14 +126,14 @@ void ardos_kernel_update_readyqueue()
 {
     uint8_t i;
     uint8_t s = ready_queue.size;
-    
+
     /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    
+
     for (i = 0; i < s; i++)
     {
         pid_t pid = sched_queue_dequeue(&ready_queue);
-        
+
         if (ardos_kernel_get_process_state(pid) == ARDOS_PROCESS_STATE_READY)
         {
             sched_queue_enqueue(&ready_queue, pid);
@@ -145,14 +145,14 @@ void ardos_kernel_update_waitqueue()
 {
     uint8_t i;
     uint8_t s = wait_queue.size;
- 
+
     /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    
+
     for (i = 0; i < s; i++)
     {
         pid_t pid = sched_queue_dequeue(&wait_queue);
-        
+
         if (ardos_kernel_get_process_state(pid) == ARDOS_PROCESS_STATE_WAIT)
         {
             sched_queue_enqueue(&wait_queue, pid);
@@ -171,7 +171,7 @@ void ardos_kernel_wakeup_joined(pid_t pid)
     {
         pid_t wakeup_pid = sched_queue_dequeue(&wait_queue);
         struct wait_event_t *we = ardos_kernel_get_process_waitevent(wakeup_pid);
-        
+
         if (we->code == ARDOS_JOIN_WAIT_EVENT)
         {
             if (we->e_info.join.joined_pid == pid)
@@ -180,7 +180,7 @@ void ardos_kernel_wakeup_joined(pid_t pid)
                 continue;
             }
         }
-        
+
         sched_queue_enqueue(&wait_queue, wakeup_pid);
     }
 }
@@ -195,7 +195,7 @@ void ardos_kernel_process_yield()
      * state that is going to generate an interrupt */
     TCNT1 = 14999;
     START_TIMER1();
-    sei(); 
+    sei();
 }
 
 pid_t ardos_kernel_process_pid()
@@ -215,7 +215,7 @@ static void run_scheduling()
     /* Already in a critical section,
      * it's only needed to stop TIMER1 */
     STOP_TIMER1();
-    
+
     /* Returns (if it's meant to) the executing process
      * to the READY queue */
     if (sched_epid != -1)
@@ -225,13 +225,13 @@ static void run_scheduling()
             ardos_kernel_schedule(sched_epid);
         }
     }
-    
+
     /* Wakes up any process waiting for a TIME event */
     for (i = wait_queue.size; i > 0; i--)
     {
         pid_t pid = sched_queue_dequeue(&wait_queue);
         struct wait_event_t *we = ardos_kernel_get_process_waitevent(pid);
-        
+
         if (we->code == ARDOS_TIME_WAIT_EVENT)
         {
             if (tick >= we->e_info.time.wakeup_tick)
@@ -240,21 +240,21 @@ static void run_scheduling()
                 continue;
             }
         }
-        
+
         sched_queue_enqueue(&wait_queue, pid);
     }
-    
+
     /* Gets the next process' PID. */
     if (ready_queue.size > 0)
-    {   
+    {
         sched_epid = sched_queue_dequeue(&ready_queue);
     }
     else
-    { 
+    {
         /* Schedules the IDLE process */
         sched_epid = ARDOS_CONFIG_MAX_PROCESSES;
     }
-       
+
     /* Restarts TIMER1 */
     START_TIMER1();
 }
@@ -263,7 +263,7 @@ ISR(TIMER1_COMPA_vect, ISR_NAKED)
 {
     /* Temporarily stores the STACK POINTER */
     static uint16_t sp_tmp;
- 
+
     /* Save the executing process' hardware context */
     ARDOS_SAVE_HWCONTEXT();
     /* Store the executing process' SP */
@@ -289,7 +289,7 @@ static void wakeup_external_interrupt(uint8_t int_num)
     {
         pid_t pid = sched_queue_dequeue(&wait_queue);
         struct wait_event_t *we = ardos_kernel_get_process_waitevent(pid);
-        
+
         if (we->code == ARDOS_INTERRUPT_WAIT_EVENT)
         {
             if (we->e_info.interrupt.interrupt_num == int_num)
@@ -298,7 +298,7 @@ static void wakeup_external_interrupt(uint8_t int_num)
                 continue;
             }
         }
-        
+
         sched_queue_enqueue(&wait_queue, pid);
     }
 }

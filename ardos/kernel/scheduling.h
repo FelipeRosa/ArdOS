@@ -61,4 +61,3 @@ extern pid_t ardos_kernel_process_pid();
 }
 #endif
 #endif /* __ARDOS_KERNEL_SCHEDULING_H */
-

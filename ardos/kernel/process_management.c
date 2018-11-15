@@ -32,10 +32,10 @@ struct process_table_entry_t
     process_state_t state;              /* State of the process stored in the entry */
 
     time_t creation_tick;               /* Process' creation tick (1 tick = 1 millisecond) */
-    
-    struct wait_event_t wait_event;     /* If the process is in the WAIT state, 
+
+    struct wait_event_t wait_event;     /* If the process is in the WAIT state,
                                          * this holds infomation about the wait event */
-    
+
     void *stack;                        /* Stack pointer of the process stored in the entry.
                                          * The stack also holds the hardware context */
 };
@@ -58,7 +58,7 @@ void ardos_idle_process_thread()
      * so we can save a little bit of power */
     SMCR = 0;    /* Idle mode */
     AVR_SLEEP(); /* Execute the SLEEP instruction */
-    
+
     for (; ; ) ;
 }
 
@@ -74,12 +74,12 @@ static void configure_idle_process()
     idle->pid = ARDOS_CONFIG_MAX_PROCESSES;
     idle->state = ARDOS_PROCESS_STATE_DEAD;
     idle->creation_tick = 0;
-    
+
     /* IDLE process' stack */
     sp = (uint8_t *)(ARDOS_CONFIG_KERNEL_STACK_TOP - ARDOS_CONFIG_KERNEL_STACK_SIZE + ARDOS_CONFIG_HWCONTEXT_SIZE);
     idle->stack = (void *)(sp - ARDOS_CONFIG_HWCONTEXT_SIZE);
-    
-    /* Pushes the return address */   
+
+    /* Pushes the return address */
     *sp-- = (uint8_t)(uint16_t)ardos_idle_process_thread;
     *sp-- = (uint8_t)(((uint16_t)ardos_idle_process_thread) >> 8);
     /* Pushes R0 */
@@ -97,7 +97,7 @@ static void configure_idle_process()
 static void init_process_table()
 {
     uint8_t i;
-    
+
     /* Initialize */
     for (i = 0; i < ARDOS_CONFIG_MAX_PROCESSES; i++)
     {
@@ -105,7 +105,7 @@ static void init_process_table()
         process_table.entries[i].state = ARDOS_PROCESS_STATE_UNKNOWN;
     }
 
-    configure_idle_process();    
+    configure_idle_process();
 }
 
 static void configure_process_table_entry(pid_t pid, void (*thread)())
@@ -125,8 +125,8 @@ static void configure_process_table_entry(pid_t pid, void (*thread)())
     /* Sets the process' stack for the first execution */
     sp = (uint8_t *)(ARDOS_CONFIG_PROCESSES_STACK_TOP - (ARDOS_CONFIG_PROCESS_STACK_SIZE + ARDOS_CONFIG_HWCONTEXT_SIZE) * pid);
     process_table.entries[pid].stack = (void *)(sp - ARDOS_CONFIG_HWCONTEXT_SIZE);
- 
-    /* Pushes the return address */   
+
+    /* Pushes the return address */
     *sp-- = (uint8_t)thread_addr;
     *sp-- = (uint8_t)(thread_addr >> 8);
     /* Pushes R0 */
@@ -146,7 +146,7 @@ void ardos_kernel_process_management_init()
 {
     /* Initializes the process table */
     process_table.process_count = 0;
-    init_process_table();    
+    init_process_table();
 }
 
 uint8_t ardos_kernel_process_count()
@@ -160,7 +160,7 @@ pid_t ardos_kernel_create_process(void (*thread)())
 
     /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    
+
     /* The process will only be created if there's an available
      * entry in the process table */
     if (process_table.process_count < ARDOS_CONFIG_MAX_PROCESSES)
@@ -180,7 +180,7 @@ pid_t ardos_kernel_create_process(void (*thread)())
         /* Counts +1 process */
         process_table.process_count++;
     }
-    
+
     return pid;
 }
 
@@ -191,7 +191,7 @@ void ardos_kernel_destroy_process(pid_t pid)
 
     /* Critical section */
     ARDOS_ENTER_CRITICAL_SECTION();
-    
+
     /* Sets the entry as NOT USED */
     entry->used = FALSE;
     /* Puts the process in the DEAD state */
@@ -266,5 +266,5 @@ struct wait_event_t *ardos_kernel_get_process_waitevent(pid_t pid)
     /* Critical section (pointer = 2 bytes) */
     ARDOS_ENTER_CRITICAL_SECTION();
     /* Returns */
-    return &process_table.entries[pid].wait_event;   
+    return &process_table.entries[pid].wait_event;
 }

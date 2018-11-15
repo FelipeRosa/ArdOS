@@ -10,7 +10,7 @@
 void f1()
 {
     DDRD = 0x80;
-    
+
     for (; ; )
     {
         PORTD ^= 0x80;
@@ -24,14 +24,14 @@ void f2()
 {
     pid_t pid;
     uint8_t on = 1;
-        
+
     pid = ardos_process_create(f1);
-    ardos_enable_eint(ARDOS_EINT_0, ARDOS_EINT_RISING_EDGE);    
-        
+    ardos_enable_eint(ARDOS_EINT_0, ARDOS_EINT_RISING_EDGE);
+
     for (; ; )
     {
         ardos_process_wait_eint(ARDOS_EINT_0);
-        
+
         if (on)
         {
             ardos_process_suspend_other(pid);
@@ -40,7 +40,7 @@ void f2()
         {
             ardos_process_resume(pid);
         }
-        
+
         on = !on;
         ardos_process_sleep(200);
     }

@@ -57,8 +57,8 @@ pid_t ardos_process_pid()
 
 void ardos_process_sleep(time_t ms)
 {
-    struct wait_event_t we;    
-    
+    struct wait_event_t we;
+
     /* Puts process to sleep and yields */
     we.code = ARDOS_TIME_WAIT_EVENT;
     we.e_info.time.wakeup_tick = ardos_kernel_millis() + ms;
@@ -70,7 +70,7 @@ void ardos_process_sleep(time_t ms)
 void ardos_process_suspend()
 {
     struct wait_event_t we;
-    
+
     /* Puts this process to wait for no specific event (critical) */
     we.code = ARDOS_UNDEFINED_WAIT_EVENT;
     ardos_kernel_put_onwait(ardos_process_pid(), &we);
@@ -81,7 +81,7 @@ void ardos_process_suspend()
 void ardos_process_suspend_other(pid_t pid)
 {
     struct wait_event_t we;
-    
+
     /* Puts the process to wait for no specific event (critical) */
     we.code = ARDOS_UNDEFINED_WAIT_EVENT;
     ardos_kernel_put_onwait(pid, &we);
@@ -104,7 +104,7 @@ void ardos_process_resume(pid_t pid)
 void ardos_process_join(pid_t pid)
 {
     struct wait_event_t we;
-    
+
     /* Puts the process to wait for no specific event (critical) */
     we.code = ARDOS_JOIN_WAIT_EVENT;
     we.e_info.join.joined_pid = pid;
@@ -133,7 +133,7 @@ void ardos_process_yield()
 void ardos_process_wait_eint(ardos_eint_t int_num)
 {
    struct wait_event_t we;
-    
+
     /* Puts the process to wait for no specific event (critical) */
     we.code = ARDOS_INTERRUPT_WAIT_EVENT;
     we.e_info.interrupt.interrupt_num = int_num;

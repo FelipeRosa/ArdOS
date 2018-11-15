@@ -57,7 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                          "push r29 \n\t"        \
                          "push r30 \n\t"        \
                          "push r31 \n\t")
-                         
+
 /* Restore a process' hardware context */
 #define ARDOS_RESTORE_HWCONTEXT()           \
     __asm__ __volatile__("pop r31 \n\t"     \
@@ -94,5 +94,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                          "pop r0 \n\t"      \
                          "out __SREG__, r0 \n\t" \
                          "pop r0 \n\t")
-                         
+
 #endif /* __ARDOS_HARDWARE_CONTEXT_SWITCH_H */
